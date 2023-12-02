@@ -131,6 +131,7 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
     // END YOUR CODE
 }
 //嘿嘿
+
 /**
  * Matrix Dot Multiplication Trans Version
  * Efficiently compute C = A.T.dot(B)
