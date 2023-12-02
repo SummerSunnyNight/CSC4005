@@ -1,7 +1,3 @@
-
-
-
-
 #include "simple_ml_ext.hpp"
 
 DataSet::DataSet(size_t images_num, size_t input_dim)
