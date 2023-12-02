@@ -1,0 +1,15 @@
+Current directory: /nfsmnt/120090069/Project4
+Softmax OpenACC
+Collecting data...
+Training softmax regression (GPU)
+| Epoch | Train Loss | Train Err | Test Loss | Test Err |
+|     0 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
+|     1 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
+|     2 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
+|     3 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
+|     4 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
+|     5 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 186273 ON node32 CANCELLED AT 2023-12-01T21:54:20 ***
+slurmstepd: error: *** STEP 186273.0 ON node32 CANCELLED AT 2023-12-01T21:54:20 ***
+Signal 15 (SIGTERM) was forwarded to the target application process group 64210
