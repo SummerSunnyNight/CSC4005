@@ -90,7 +90,6 @@ void print_matrix(float *A, size_t m, size_t n)
  *     B (const float*): Matrix of size n * k
  *     C (float*): Matrix of size m * k
  **/
-#pragma acc routine 
 void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
 {   
 
@@ -103,13 +102,10 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
     //     }
     // }
     // BEGIN YOUR CODE
-    //     #pragma acc data copyin(A[0:m*n], B[0:n*k]) copyout(C[0:m*k])
-        #pragma acc data copyout(C[0:m*k])
-        {
+        #pragma acc data copyin(A[0:m*n], B[0:n*k]) copyout(C[0:m*k])
 
-
-    // {
-        #pragma acc loop 
+    {
+        #pragma acc parallel loop 
 
         for (size_t i = 0; i < m; ++i) {
             #pragma acc loop independent
@@ -126,8 +122,7 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
 
             }
         }
-    // }
-        }
+    }
 
 
 
@@ -148,9 +143,9 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
 void matrix_dot_trans_mine(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
 {
     // BEGIN YOUR CODE
-    // #pragma acc data copyin(A[0:m*n], B[0:m*k]) copyout(C[0:n*k])
-    // {
-        #pragma acc loop
+    #pragma acc data copyin(A[0:m*n], B[0:m*k]) copyout(C[0:n*k])
+    {
+        #pragma acc parallel loop
             for (size_t i = 0; i < n; i++) {
                 #pragma acc loop
 
@@ -164,7 +159,7 @@ void matrix_dot_trans_mine(const float *A, const float *B, float *C, size_t m, s
                     C[i*k + j]=sum;
                 }
         }
-    // }
+    }
 
     // // // END YOUR CODE
     // for (size_t i = 0; i < n; i++) {
@@ -460,8 +455,8 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     // // delete ptr; // 这是一个未定义行为
     // cout<<"trial1"<<endl;
     // #pragma acc kernels
-    #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
-    {
+    // #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
+    // {
 
     for(int Cur_batch_index=0;Cur_batch_index<total_row_num;Cur_batch_index+=batch){//每次只用这一百行进行训练
         //Cur_X是那个公式里的X
@@ -483,7 +478,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
 //         #pragma acc data copyin(Cur_X[0:batch*n], theta[0:n*k]) copyout(Z[0:batch*k])
 // {
 
-        #pragma acc parallel
+        // #pragma acc parallel
         {
             matrix_dot(Cur_X,theta,Z,batch,n,k);
 
@@ -522,7 +517,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
 
 
     }
-    }
+    // }
 
 
     // cout<<"achieved here"<<endl;
