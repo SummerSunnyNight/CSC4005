@@ -457,9 +457,9 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     // #pragma acc kernels
     // #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
     // {
-    // #pragma acc parallel loop seq copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
-    // {
-    #pragma acc parallel loop seq 
+    #pragma acc data copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
+    {
+    // #pragma acc parallel loop seq 
 
     
 
@@ -467,25 +467,25 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         //Cur_X是那个公式里的X
         // cout<<"achieved here1!"<<endl;
 
-        const float*Cur_X= X + n * Cur_batch_index;//指针使用要注意，这里使用一个常量指针，指针指向的值不能被修改。
+        // const float*Cur_X= X + n * Cur_batch_index;//指针使用要注意，这里使用一个常量指针，指针指向的值不能被修改。
         // cout<<"X_test:";
         // for(int i=0;i<20;i++){
         //     cout<<Cur_X[i]<<",";   //这边怎么全是零
         // }
         // cout<<endl;
-        const unsigned char*Cur_y= y + Cur_batch_index;
+        // const unsigned char*Cur_y= y + Cur_batch_index;
         //把Iy变出来
-        // #pragma acc parallel
-        // {
+        #pragma acc parallel
+        {
 
-        vector_to_one_hot_matrix(Cur_y, Y, batch,k);
+        vector_to_one_hot_matrix(y + Cur_batch_index, Y, batch,k);
 
 //         #pragma acc data copyin(Cur_X[0:batch*n], theta[0:n*k]) copyout(Z[0:batch*k])
 // {
 
         // #pragma acc parallel
         // {
-        matrix_dot(Cur_X ,theta,Z,batch,n,k);
+        matrix_dot(X + n * Cur_batch_index ,theta,Z,batch,n,k);
 
         // }
 
@@ -504,7 +504,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         //XT*(Z-Iy)
 
 
-        matrix_dot_trans_mine(Cur_X,Z,Final,batch,n,k);//结果感觉不应该这么大？
+        matrix_dot_trans_mine(X + n * Cur_batch_index,Z,Final,batch,n,k);//结果感觉不应该这么大？
      
 
 
@@ -518,11 +518,11 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         //得到最后的theta
 
         matrix_minus(theta,Final,n,k);
-        // }
+        }
 
 
     }
-    // }
+    }
     // }
     
 
