@@ -22,11 +22,34 @@ TEST_Y=./dataset/testing/t10k-labels.idx1-ubyte
 # #可以以后在自己的主机上学，没必要在集群上学
 # echo ""
 
+file="openacc_Result-new.qdrep"
+
+# 检查文件是否存在
+if [ -e "$file" ]; then
+    # 如果文件存在，则删除
+    rm "$file"
+    echo "文件 $file 已删除"
+else
+    echo "文件 $file 不存在"
+fi
+
+file="openacc_Result-new.sqlite"
+
+# 检查文件是否存在
+if [ -e "$file" ]; then
+    # 如果文件存在，则删除
+    rm "$file"
+    echo "文件 $file 已删除"
+else
+    echo "文件 $file 不存在"
+fi
+
+
 echo "Softmax OpenACC"
 
- srun -n 1 --gpus 1 nsys profile -t cuda,nvtx,osrt,openacc -o ./openacc_Result.qdrep ${CURRENT_DIR}/build/softmax_openacc $TRAIN_X $TRAIN_Y $TEST_X $TEST_Y
+#  srun -n 1 --gpus 1 nsys profile -t cuda,nvtx,osrt,openacc -o ./openacc_Result-new.qdrep ${CURRENT_DIR}/build/softmax_openacc $TRAIN_X $TRAIN_Y $TEST_X $TEST_Y
 
-# srun -n 1 --gpus 1 ${CURRENT_DIR}/build/softmax_openacc $TRAIN_X $TRAIN_Y $TEST_X $TEST_Y
+srun -n 1 --gpus 1 ${CURRENT_DIR}/build/softmax_openacc $TRAIN_X $TRAIN_Y $TEST_X $TEST_Y
 echo ""
 
 # # NN
