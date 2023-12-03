@@ -3,14 +3,8 @@ Softmax OpenACC
 Training softmax regression (GPU)
 | Epoch | Train Loss | Train Err | Test Loss | Test Err |
 |     0 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     1 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     2 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     3 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     4 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     5 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     6 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     7 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     8 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-|     9 |    2.30289 |   0.90128 |   2.30270 |  0.90200 |
-Execution Time: 19909 milliseconds
+Failing in Thread:1
+call to cuStreamSynchronize returned error 700: Illegal address during kernel execution
+
+srun: error: node33: task 0: Exited with exit code 1
 
