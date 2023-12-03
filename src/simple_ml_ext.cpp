@@ -473,8 +473,8 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
 
         vector_to_one_hot_matrix(Cur_y, Y, batch,k);
 
-//         #pragma acc data copyin(Cur_X[0:batch*n], theta[0:n*k]) copyout(Z[0:batch*k])
-// {
+        #pragma acc data copyin(Cur_X[0:batch*n], theta[0:n*k]) copyout(Z[0:batch*k])
+{
 
         #pragma acc parallel
         {
@@ -482,7 +482,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
 
         }
 
-// }
+}
        
 
 
