@@ -98,7 +98,7 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
     //     }
     // }
     // BEGIN YOUR CODE
-        #pragma acc data copyin(A[0:m*n], B[0:n*k]) copyout(C[0:m*k])
+        #pragma acc data present(A[0:m*n], B[0:n*k],C[0:m*k])
 
     {
         #pragma acc parallel loop 
@@ -141,7 +141,7 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
 void matrix_dot_trans_mine(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
 {
     // BEGIN YOUR CODE
-    #pragma acc data copyin(A[0:m*n], B[0:m*k]) copyout(C[0:n*k])
+    #pragma acc data present(A[0:m*n], B[0:m*k],C[0:n*k])
     {
         #pragma acc parallel loop
             for (size_t i = 0; i < n; i++) {
@@ -227,26 +227,26 @@ void matrix_trans_dot(const float *A, const float *B, float *C, size_t m, size_t
 void matrix_minus(float *A, const float *B, size_t m, size_t n)
 {
     // BEGIN YOUR CODE
-    for (size_t i = 0; i < m; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            A[i * n + j] -= B[i * n + j];
-        }
-    }
-    // END YOUR CODE
-    //     #pragma acc data copy(A[0:m*n], B[0:m*n])
-    // {
-
-
-    //         #pragma acc parallel loop independent
-    //         for (size_t i = 0; i < m; ++i) {
-    //             #pragma acc loop independent
-
-    //             for (size_t j = 0; j < n; ++j) {
-    //                 A[i*n + j] -= B[i*n + j];
-    //             }
-    //         }
-
+    // for (size_t i = 0; i < m; ++i) {
+    //     for (size_t j = 0; j < n; ++j) {
+    //         A[i * n + j] -= B[i * n + j];
+    //     }
     // }
+    // END YOUR CODE
+        #pragma acc data present(A[0:m*n], B[0:m*n])
+    {
+
+
+            #pragma acc parallel loop independent
+            for (size_t i = 0; i < m; ++i) {
+                #pragma acc loop independent
+
+                for (size_t j = 0; j < n; ++j) {
+                    A[i*n + j] -= B[i*n + j];
+                }
+            }
+
+    }
 }
 
 /**
@@ -259,24 +259,24 @@ void matrix_minus(float *A, const float *B, size_t m, size_t n)
 void matrix_mul_scalar(float *C, float scalar, size_t m, size_t n)
 {
     // BEGIN YOUR CODE
-    // #pragma acc data copy(C[0:m*n])
-    // {
-    //     {
-    //         #pragma acc parallel loop
-    //         for (size_t i = 0; i < m; ++i) {
-    //             #pragma acc loop
+    #pragma acc data present(C[0:m*n])
+    {
+        {
+            #pragma acc parallel loop
+            for (size_t i = 0; i < m; ++i) {
+                #pragma acc loop
 
-    //             for (size_t j = 0; j < n; ++j) {
-    //                 C[i*n + j] *= scalar;
-    //             }
-    //         }
-    //     }
-    // }
-    for (size_t i = 0; i < m; i++) {
-        for (size_t j = 0; j < n; j++) {
-            C[i * n + j] *= scalar;
+                for (size_t j = 0; j < n; ++j) {
+                    C[i*n + j] *= scalar;
+                }
+            }
         }
     }
+    // for (size_t i = 0; i < m; i++) {
+    //     for (size_t j = 0; j < n; j++) {
+    //         C[i * n + j] *= scalar;
+    //     }
+    // }
     // END YOUR CODE
 }
 
@@ -306,54 +306,54 @@ void matrix_div_scalar(float *C, float scalar, size_t m, size_t n)
  **/
 void matrix_softmax_normalize(float *C, size_t m, size_t n)
 {
-    // BEGIN YOUR CODE
-    //这里按照题意不考虑溢出情况、
-     for (size_t i = 0; i < m; ++i) {
-        // // 找到每一行的最大值
-        // float max_val = *std::max_element(C + i * n, C + (i + 1) * n);
+    // // BEGIN YOUR CODE
+    // //这里按照题意不考虑溢出情况、
+    //  for (size_t i = 0; i < m; ++i) {
+    //     // // 找到每一行的最大值
+    //     // float max_val = *std::max_element(C + i * n, C + (i + 1) * n);
 
-        // 计算 softmax 归一化的分母
-        float denominator = 0.0;
-        for (size_t j = 0; j < n; ++j) {
-            // C[i * n + j] = std::exp(C[i * n + j] - max_val);
-            C[i * n + j] = std::exp(C[i * n + j]);
-            denominator += C[i * n + j];
-        }
+    //     // 计算 softmax 归一化的分母
+    //     float denominator = 0.0;
+    //     for (size_t j = 0; j < n; ++j) {
+    //         // C[i * n + j] = std::exp(C[i * n + j] - max_val);
+    //         C[i * n + j] = std::exp(C[i * n + j]);
+    //         denominator += C[i * n + j];
+    //     }
 
-        // 进行 softmax 归一化
-        for (size_t j = 0; j < n; ++j) {
-            C[i * n + j] /= denominator;
-        }
-    }
-    // END YOUR CODE
+    //     // 进行 softmax 归一化
+    //     for (size_t j = 0; j < n; ++j) {
+    //         C[i * n + j] /= denominator;
+    //     }
+    // }
+    // // END YOUR CODE
 
 
-// #pragma acc data copy(C[0:m*n]) 
-//   {
+#pragma acc data present(C[0:m*n]) 
+  {
 
-//     // #pragma acc kernels
-//     // {
+    // #pragma acc kernels
+    // {
     
-//       #pragma acc parallel loop independent
-//       for(size_t i = 0; i < m; ++i) {
+      #pragma acc parallel loop independent
+      for(size_t i = 0; i < m; ++i) {
 
-//         float denominator = 0.0;
+        float denominator = 0.0;
         
-//         #pragma acc loop reduction(+:denominator)
-//         for(size_t j = 0; j < n; ++j) {
-//           C[i*n + j] = exp(C[i*n + j]);
-//           denominator += C[i*n + j];
-//         }
+        #pragma acc loop reduction(+:denominator)
+        for(size_t j = 0; j < n; ++j) {
+          C[i*n + j] = exp(C[i*n + j]);
+          denominator += C[i*n + j];
+        }
 
-//         #pragma acc loop independent
-//         for(size_t j = 0; j < n; ++j) {
-//           C[i*n + j] /= denominator; 
-//         }
-//       }
+        #pragma acc loop independent
+        for(size_t j = 0; j < n; ++j) {
+          C[i*n + j] /= denominator; 
+        }
+      }
 
-//     // }
+    // }
   
-//   }
+  }
 
 }
 
@@ -365,41 +365,41 @@ void matrix_softmax_normalize(float *C, size_t m, size_t n)
  **/
 void vector_to_one_hot_matrix(const unsigned char *y, float *Y, size_t m, size_t k)
 {
-    // BEGIN YOUR CODE
-    //这里虽然有typo但是实际没问题
-        // 清零矩阵 Y
-    for (size_t i = 0; i < m * k; ++i) {
-        Y[i] = 0.0;
-    }
+    // // BEGIN YOUR CODE
+    // //这里虽然有typo但是实际没问题
+    //     // 清零矩阵 Y
+    // for (size_t i = 0; i < m * k; ++i) {
+    //     Y[i] = 0.0;
+    // }
 
-    // 将 y 转换为独热编码矩阵 Y
-    for (size_t i = 0; i < m; ++i) {
-        size_t index = i * k + static_cast<size_t>(y[i]);
-        Y[index] = 1.0;
-    }
+    // // 将 y 转换为独热编码矩阵 Y
+    // for (size_t i = 0; i < m; ++i) {
+    //     size_t index = i * k + static_cast<size_t>(y[i]);
+    //     Y[index] = 1.0;
+    // }
     // END YOUR CODE
-//       #pragma acc data copyin(y[0:m]) copyout(Y[0:m*k])
-//   {
+      #pragma acc data present(y[0:m],Y[0:m*k])
+  {
 
-//     // #pragma acc kernels
-//     // {
+    // #pragma acc kernels
+    // {
     
-//       #pragma acc parallel loop independent
-//       for(size_t i = 0; i < m * k; ++i) {
-//         Y[i] = 0.0f;
-//       }
+      #pragma acc parallel loop independent
+      for(size_t i = 0; i < m * k; ++i) {
+        Y[i] = 0.0f;
+      }
 
-//       #pragma acc parallel loop independent    
-//       for(size_t i = 0; i < m; ++i) {
+      #pragma acc parallel loop independent    
+      for(size_t i = 0; i < m; ++i) {
       
-//         size_t index = i * k + static_cast<size_t>(y[i]);
-//         Y[index] = 1.0f;
+        size_t index = i * k + static_cast<size_t>(y[i]);
+        Y[index] = 1.0f;
       
-//       }
+      }
 
-//     // }
+    // }
 
-//   }
+  }
 }
 
 /**
@@ -456,6 +456,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     // #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
     // {
     // #pragma acc data copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
+    #pragma acc data copy(Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) 
     {
     // #pragma acc parallel loop seq 
 
@@ -476,14 +477,14 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         // #pragma acc parallel
         // {
 
-        vector_to_one_hot_matrix(y + Cur_batch_index, Y, batch,k);
+        vector_to_one_hot_matrix(Cur_y, Y, batch,k);
 
 //         #pragma acc data copyin(Cur_X[0:batch*n], theta[0:n*k]) copyout(Z[0:batch*k])
 // {
 
         // #pragma acc parallel
         // {
-        matrix_dot(X + n * Cur_batch_index ,theta,Z,batch,n,k);
+        matrix_dot(Cur_X ,theta,Z,batch,n,k);
 
         // }
 
@@ -502,7 +503,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         //XT*(Z-Iy)
 
 
-        matrix_dot_trans_mine(X + n * Cur_batch_index,Z,Final,batch,n,k);//结果感觉不应该这么大？
+        matrix_dot_trans_mine(Cur_X,Z,Final,batch,n,k);//结果感觉不应该这么大？
      
 
 
@@ -563,7 +564,15 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
     //     cout<<train_data->images_matrix[i]<<",";
 
     // }images_num * input_dim
-        // #pragma acc data copy(train_data->images_matrix[0:train_data->images_num * train_data->input_dim])
+
+
+    float * X=train_data->images_matrix;
+    unsigned char*y=train_data->labels_array;
+    size_t images_num=train_data->images_num;
+    size_t input_dim=train_data->input_dim;
+
+
+        #pragma acc data copy(X[0:images_num * input_dim],y[0:images_num],theta[0:size],train_result[0:images_num*num_classes])
         {
 
 
@@ -577,16 +586,16 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
 
         // #pragma acc data copy()
         {
-            softmax_regression_epoch_cpp(train_data->images_matrix,train_data->labels_array,theta,train_data->images_num,train_data->input_dim,num_classes,lr,batch);
+            softmax_regression_epoch_cpp(X,y,theta,images_num,input_dim,num_classes,lr,batch);
 
 
-            matrix_dot(train_data->images_matrix,theta,train_result,train_data->images_num,train_data->input_dim,num_classes);
-            matrix_dot(test_data->images_matrix,theta,test_result,test_data->images_num,test_data->input_dim,num_classes);
+            matrix_dot(X,theta,train_result,images_num,input_dim,num_classes);
+            matrix_dot(X,theta,test_result,images_num,input_dim,num_classes);
             // END YOUR CODE
-            train_loss = mean_softmax_loss(train_result, train_data->labels_array, train_data->images_num, num_classes);
-            test_loss = mean_softmax_loss(test_result, test_data->labels_array, test_data->images_num, num_classes);
-            train_err = mean_err(train_result, train_data->labels_array, train_data->images_num, num_classes);
-            test_err = mean_err(test_result, test_data->labels_array, test_data->images_num, num_classes);
+            train_loss = mean_softmax_loss(train_result, y, images_num, num_classes);
+            test_loss = mean_softmax_loss(test_result, y, images_num, num_classes);
+            train_err = mean_err(train_result, y, images_num, num_classes);
+            test_err = mean_err(test_result, y, images_num, num_classes);
         }
         
         std::cout << "|  " << std::setw(4) << std::right << epoch << " |    "
@@ -625,50 +634,50 @@ float mean_softmax_loss(const float *result, const unsigned char *labels_array, 
 {
     // BEGIN YOUR CODE
 
+    // float loss = 0;
+    // for(size_t i = 0; i < images_num; ++i) {
+    //     float divisor=0;
+    //     for(int j=0;j<num_classes;j++){//j小于写成了i小于
+    //         divisor+=exp(result[i*num_classes+j]);
+    //     }
+    //     float logit = result[i*num_classes + labels_array[i]];
+    //     loss -= log(exp(logit) / divisor);
+    // }
+    // loss /= images_num;
+
+
+    // return loss;
+
+
+
     float loss = 0;
-    for(size_t i = 0; i < images_num; ++i) {
-        float divisor=0;
-        for(int j=0;j<num_classes;j++){//j小于写成了i小于
-            divisor+=exp(result[i*num_classes+j]);
+
+     #pragma acc data present(result[0:images_num*num_classes],labels_array[0:images_num])
+  {
+
+    // #pragma acc kernels
+    // {
+
+      #pragma acc parallel loop reduction(+:loss)
+      for(size_t i = 0; i < images_num; ++i)
+      {
+        float divisor = 0;
+
+        #pragma acc loop reduction(+:divisor)
+        for(int j = 0; j < num_classes; ++j) {
+          divisor += exp(result[i*num_classes + j]);
         }
+
         float logit = result[i*num_classes + labels_array[i]];
         loss -= log(exp(logit) / divisor);
-    }
-    loss /= images_num;
+      }
 
+      loss /= images_num;
+    // }
 
+  }
     return loss;
-
-
-
-//     float loss = 0;
-
-//      #pragma acc data copyin(result[0:images_num*num_classes],labels_array[0:images_num])
-//   {
-
-//     // #pragma acc kernels
-//     // {
-
-//       #pragma acc parallel loop reduction(+:loss)
-//       for(size_t i = 0; i < images_num; ++i)
-//       {
-//         float divisor = 0;
-
-//         #pragma acc loop reduction(+:divisor)
-//         for(int j = 0; j < num_classes; ++j) {
-//           divisor += exp(result[i*num_classes + j]);
-//         }
-
-//         float logit = result[i*num_classes + labels_array[i]];
-//         loss -= log(exp(logit) / divisor);
-//       }
-
-//       loss /= images_num;
-//     // }
-
-//   }
-//     return loss;
-//     // END YOUR CODE
+    // END YOUR CODE
 }
 
 /*
@@ -684,74 +693,74 @@ float mean_softmax_loss(const float *result, const unsigned char *labels_array, 
  */
 float mean_err(float *result, const unsigned char *labels_array, size_t images_num, size_t num_classes)
 {
-    // BEGIN YOUR CODE
+    // // BEGIN YOUR CODE
+    // size_t error_count = 0;
+
+    // // 遍历每个样本
+    // for (size_t i = 0; i < images_num; ++i) {
+    //     // 获取当前样本的真实标签
+    //     unsigned char label = labels_array[i];
+
+    //     // 找到预测的最大概率对应的类别
+    //     size_t predicted_class = 0;
+    //     float max_prob = result[i * num_classes];
+    //     for (size_t j = 1; j < num_classes; ++j) {
+    //         if (result[i * num_classes + j] > max_prob) {
+    //             max_prob = result[i * num_classes + j];
+    //             predicted_class = j;
+    //         }
+    //     }
+
+    //     // 判断预测是否正确
+    //     if (predicted_class != label) {
+    //         error_count++;
+    //     }
+    // }
+
+    // // 计算平均错误
+    // float mean_error = static_cast<float>(error_count) / static_cast<float>(images_num);
+
+    // return mean_error;
+    // // END YOUR CODE
+
+
     size_t error_count = 0;
 
-    // 遍历每个样本
-    for (size_t i = 0; i < images_num; ++i) {
-        // 获取当前样本的真实标签
+  #pragma acc data present(result[0:images_num*num_classes],labels_array[0:images_num])
+  {
+
+    // #pragma acc kernels
+    // {
+
+      #pragma acc parallel loop reduction(+:error_count)
+      for(size_t i = 0; i < images_num; ++i)
+      {
         unsigned char label = labels_array[i];
 
-        // 找到预测的最大概率对应的类别
         size_t predicted_class = 0;
-        float max_prob = result[i * num_classes];
-        for (size_t j = 1; j < num_classes; ++j) {
-            if (result[i * num_classes + j] > max_prob) {
-                max_prob = result[i * num_classes + j];
-                predicted_class = j;
-            }
+        float max_prob = result[i*num_classes];
+
+        #pragma acc loop reduction(max:max_prob,predicted_class)
+        for(size_t j = 1; j < num_classes; ++j) {
+
+          if(result[i*num_classes + j] > max_prob){
+            max_prob = result[i * num_classes + j];
+            predicted_class = j;
+          }
+
         }
 
-        // 判断预测是否正确
-        if (predicted_class != label) {
-            error_count++;
+        if(predicted_class != label) {
+          ++error_count;
         }
-    }
+      }
 
-    // 计算平均错误
-    float mean_error = static_cast<float>(error_count) / static_cast<float>(images_num);
+    // }
 
-    return mean_error;
-    // END YOUR CODE
+  }
+    float mean_error = (float)error_count / (float)images_num;
 
-
-//     size_t error_count = 0;
-
-//   #pragma acc data copyin(result[0:images_num*num_classes],labels_array[0:images_num])
-//   {
-
-//     // #pragma acc kernels
-//     // {
-
-//       #pragma acc parallel loop reduction(+:error_count)
-//       for(size_t i = 0; i < images_num; ++i)
-//       {
-//         unsigned char label = labels_array[i];
-
-//         size_t predicted_class = 0;
-//         float max_prob = result[i*num_classes];
-
-//         #pragma acc loop reduction(max:max_prob,predicted_class)
-//         for(size_t j = 1; j < num_classes; ++j) {
-
-//           if(result[i*num_classes + j] > max_prob){
-//             max_prob = result[i * num_classes + j];
-//             predicted_class = j;
-//           }
-
-//         }
-
-//         if(predicted_class != label) {
-//           ++error_count;
-//         }
-//       }
-
-//     // }
-
-//   }
-//     float mean_error = (float)error_count / (float)images_num;
-
-//   return mean_error;
+  return mean_error;
 }
 
 // /**
