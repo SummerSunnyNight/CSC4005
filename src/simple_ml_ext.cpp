@@ -456,7 +456,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     // #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
     // {
     // #pragma acc data copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
-    #pragma acc data copy(Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) 
+    #pragma acc data copyin(Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) 
     {
     // #pragma acc parallel loop seq 
 
@@ -466,13 +466,13 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         //Cur_X是那个公式里的X
         // cout<<"achieved here1!"<<endl;
 
-        // const float*Cur_X= X + n * Cur_batch_index;//指针使用要注意，这里使用一个常量指针，指针指向的值不能被修改。
+        const float*Cur_X= X + n * Cur_batch_index;//指针使用要注意，这里使用一个常量指针，指针指向的值不能被修改。
         // cout<<"X_test:";
         // for(int i=0;i<20;i++){
         //     cout<<Cur_X[i]<<",";   //这边怎么全是零
         // }
         // cout<<endl;
-        // const unsigned char*Cur_y= y + Cur_batch_index;
+        const unsigned char*Cur_y= y + Cur_batch_index;
         //把Iy变出来
         // #pragma acc parallel
         // {
@@ -572,7 +572,7 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
     size_t input_dim=train_data->input_dim;
 
 
-        #pragma acc data copy(X[0:images_num * input_dim],y[0:images_num],theta[0:size],train_result[0:images_num*num_classes])
+        #pragma acc data copyin(X[0:images_num * input_dim],y[0:images_num],theta[0:size],train_result[0:images_num*num_classes],test_result[0:images_num*num_classes])
         {
 
 
