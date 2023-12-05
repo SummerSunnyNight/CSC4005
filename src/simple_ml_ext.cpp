@@ -86,7 +86,6 @@ void print_matrix(float *A, size_t m, size_t n)
  *     B (const float*): Matrix of size n * k
  *     C (float*): Matrix of size m * k
  **/
-#pragma acc routine
 void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
 {   
 
@@ -99,10 +98,10 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
     //     }
     // }
     // BEGIN YOUR CODE
-        // #pragma acc data copyin(A[0:m*n], B[0:n*k]) copyout(C[0:m*k])
+        #pragma acc data copyin(A[0:m*n], B[0:n*k]) copyout(C[0:m*k])
 
     {
-        #pragma acc loop 
+        #pragma acc parallel loop 
 
         for (size_t i = 0; i < m; ++i) {
             #pragma acc loop independent
@@ -138,14 +137,13 @@ void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, si
  *     C (float*): Matrix of size n * k
  **/
 
-#pragma acc routine
 
 void matrix_dot_trans_mine(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
 {
     // BEGIN YOUR CODE
-    // #pragma acc data copyin(A[0:m*n], B[0:m*k]) copyout(C[0:n*k])
+    #pragma acc data copyin(A[0:m*n], B[0:m*k]) copyout(C[0:n*k])
     {
-        #pragma acc loop
+        #pragma acc parallel loop
             for (size_t i = 0; i < n; i++) {
                 #pragma acc loop
 
@@ -457,7 +455,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     // #pragma acc kernels
     // #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
     // {
-    #pragma acc data copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
+    // #pragma acc data copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
     {
     // #pragma acc parallel loop seq 
 
@@ -475,8 +473,8 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
         // cout<<endl;
         // const unsigned char*Cur_y= y + Cur_batch_index;
         //把Iy变出来
-        #pragma acc parallel
-        {
+        // #pragma acc parallel
+        // {
 
         vector_to_one_hot_matrix(y + Cur_batch_index, Y, batch,k);
 
@@ -522,7 +520,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
 
 
     }
-    }
+    // }
     // }
     
 
