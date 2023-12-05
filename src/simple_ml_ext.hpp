@@ -69,6 +69,7 @@ void vector_to_one_hot_matrix(const unsigned char *y, float *Y, size_t m, size_t
 void softmax_regression_epoch_cpp(const float *X,
                                   const unsigned char *y,
                                   float *theta,
+                                  float*Final,float*Y,float*Z,
                                   size_t m,
                                   size_t n,
                                   size_t k,

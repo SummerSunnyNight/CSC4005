@@ -423,7 +423,8 @@ void vector_to_one_hot_matrix(const unsigned char *y, float *Y, size_t m, size_t
  * Returns:
  *     (None)
  */
-void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float *theta, size_t m, size_t n, size_t k, float lr, size_t batch)
+
+void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float *theta,float*Final,float*Y,float*Z, size_t m, size_t n, size_t k, float lr, size_t batch)
 {
     // BEGIN YOUR CODE
 
@@ -435,9 +436,11 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     int total_row_num = m;//似乎没有clangd能帮我，将就这用把，似乎能被整除，直接用batch也可以，就不用cut了
 
 
-    float *Final = new float[n*k];
-    float *Y = new float[batch*k];//每个batch都是不同的？
-    float *Z = new float[batch*k];
+//     float *Final = new float[n*k];
+// float *Y = new float[batch*k];
+// float *Z = new float[batch*k];
+    //每个batch都是不同的？
+    
 
     // #pragma acc data copyin(A[0:m*n], B[0:n*k]) copyout(C[0:m*k])
 
@@ -456,7 +459,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     // #pragma acc data copyin(X[0:m*n],y[0:m]) copy(theta[0:n*k])
     // {
     // #pragma acc data copyin(X[0:batch*n], theta[0:n*k],y[0:batch],Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) copyout(theta[0:n*k])
-    #pragma acc data copyin(Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) 
+    #pragma acc data present(Y[0:batch*k],Z[0:batch*k],Final[0:n*k]) 
     {
     // #pragma acc parallel loop seq 
 
@@ -526,12 +529,12 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y, float 
     
 
 
-    // cout<<"achieved here"<<endl;
-    delete[] Final;//这里等下优化一下看看能不能循环利用
-    // cout<<"achieved here"<<endl;
+    // // cout<<"achieved here"<<endl;
+    // delete[] Final;//这里等下优化一下看看能不能循环利用
+    // // cout<<"achieved here"<<endl;
 
-    delete[] Y;
-    delete[] Z;
+    // delete[] Y;
+    // delete[] Z;
 
 
 
@@ -569,10 +572,13 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
     float * X=train_data->images_matrix;
     unsigned char*y=train_data->labels_array;
     size_t images_num=train_data->images_num;
-    size_t input_dim=train_data->input_dim;
+    size_t input_dim=train_data->input_dim; 
+    float *Final = new float[input_dim*num_classes];
+    float *Y = new float[batch*num_classes];
+    float *Z = new float[batch*num_classes];
 
 
-        #pragma acc data copyin(X[0:images_num * input_dim],y[0:images_num],theta[0:size],train_result[0:images_num*num_classes],test_result[0:images_num*num_classes])
+        #pragma acc data copyin(Y[0:batch*num_classes],Z[0:batch*num_classes],Final[0:input_dim*num_classes],X[0:images_num * input_dim],y[0:images_num],theta[0:size],train_result[0:images_num*num_classes],test_result[0:images_num*num_classes])
         {
 
 
@@ -586,7 +592,7 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
 
         // #pragma acc data copy()
         {
-            softmax_regression_epoch_cpp(X,y,theta,images_num,input_dim,num_classes,lr,batch);
+            softmax_regression_epoch_cpp(X,y,theta,Final,Y,Z,images_num,input_dim,num_classes,lr,batch);
 
 
             matrix_dot(X,theta,train_result,images_num,input_dim,num_classes);

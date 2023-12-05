@@ -12,5 +12,5 @@ Training softmax regression (GPU)
 |     7 |    0.28345 |   0.07997 |   0.28345 |  0.07997 |
 |     8 |    0.28100 |   0.07923 |   0.28100 |  0.07923 |
 |     9 |    0.27887 |   0.07847 |   0.27887 |  0.07847 |
-Execution Time: 2263 milliseconds
+Execution Time: 2160 milliseconds
 
