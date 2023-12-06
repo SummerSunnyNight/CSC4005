@@ -784,100 +784,273 @@ float mean_err(float *result, const unsigned char *labels_array, size_t images_n
   return mean_error;
 }
 
-// /**
-//  * Matrix Multiplication
-//  * Efficiently compute A = A * B
-//  * For each element A[i], B[i] of A and B, A[i] -= B[i]
-//  * Args:
-//  *     A (float*): Matrix of size m * n
-//  *     B (const float*): Matrix of size m * n
-//  **/
-// void matrix_mul(float *A, const float *B, size_t size)
-// {
-//     // BEGIN YOUR CODE
+/**
+ * Matrix Multiplication
+ * Efficiently compute A = A * B
+ * For each element A[i], B[i] of A and B, A[i] -= B[i]
+ * Args:
+ *     A (float*): Matrix of size m * n
+ *     B (const float*): Matrix of size m * n
+ **/
+void matrix_mul(float *A, const float *B, size_t size)
+{
+    // // BEGIN YOUR CODE
+    // for (size_t i = 0; i < size; i++)
+    // {
+    //     A[i] *= B[i];
+    // }
+    // // END YOUR CODE
+      
+    #pragma acc parallel loop present(A[0:size],B[0:size])
+    for (size_t i = 0; i < size; i++) {
+        A[i] *= B[i]; 
+    }
+}
 
-//     // END YOUR CODE
-// }
+void relu(float *A, size_t size)
+{
+    // BEGIN YOUR CODE
+    #pragma acc parallel loop present(A[0:size])
+    for (size_t i = 0; i < size; i++) {
+        A[i] = std::max(0.0f,A[i]);
+    }
+    // END YOUR CODE
+}
+void zero_or_one(float *input, size_t size)
+{
+    // // BEGIN YOUR CODE
+    // for (size_t i = 0; i < size; i++)
+    // {
+    //     if(input[i]>0){
+    //         input[i]=1;
+    //     }
+    //     else{
+    //         input[i]=0;
+    //     }
+    // }
+    // // END YOUR CODE
+        #pragma acc data present(input[0:size]) 
+    {
+        #pragma acc parallel loop 
+        for (size_t i = 0; i < size; i++) 
+        {
+            if(input[i]>0){
+                input[i]=1;
+            }
+            else{
+                input[i]=0;
+            }
+        }
+    }
+}
 
-// /*
-// Run a single epoch of SGD for a two-layer neural network defined by the
-// weights W1 and W2 (with no bias terms):
-//     logits = ReLU(X * W1) * W2
-// The function should use the step size lr, and the specified batch size (and
-// again, without randomizing the order of X).  It should modify the
-// W1 and W2 matrices in place.
-// Args:
-//     X: 1D input array of size
-//         (num_examples x input_dim).
-//     y: 1D class label array of size (num_examples,)
-//     W1: 1D array of first layer weights, of shape
-//         (input_dim x hidden_dim)
-//     W2: 1D array of second layer weights, of shape
-//         (hidden_dim x num_classes)
-//     m: num_examples
-//     n: input_dim
-//     l: hidden_dim
-//     k: num_classes
-//     lr (float): step size (learning rate) for SGD
-//     batch (int): size of SGD minibatch
-// */
-// void nn_epoch_cpp(const float *X, const unsigned char *y, float *W1, float *W2, size_t m, size_t n, size_t l, size_t k, float lr, size_t batch)
-// {
-//     // BEGIN YOUR CODE
+/*
+Run a single epoch of SGD for a two-layer neural network defined by the
+weights W1 and W2 (with no bias terms):
+    logits = ReLU(X * W1) * W2
+The function should use the step size lr, and the specified batch size (and
+again, without randomizing the order of X).  It should modify the
+W1 and W2 matrices in place.
+Args:
+    X: 1D input array of size
+        (num_examples x input_dim).
+    y: 1D class label array of size (num_examples,)
+    W1: 1D array of first layer weights, of shape
+        (input_dim x hidden_dim)
+    W2: 1D array of second layer weights, of shape
+        (hidden_dim x num_classes)
+    m: num_examples
+    n: input_dim
+    l: hidden_dim
+    k: num_classes
+    lr (float): step size (learning rate) for SGD
+    batch (int): size of SGD minibatch
+*/
+void nn_epoch_cpp(const float *X, const unsigned char *y, float *W1, float *W2, size_t m, size_t n, size_t l, size_t k, float lr, size_t batch)
+{
+    // BEGIN YOUR CODE
+    // BEGIN YOUR CODE
+    float *Grad_W1=new float [n*l];
+    float *SW2=new float [batch*l];
+    float *Grad_W2=new float [l*k];
+    float *Y = new float[batch*k];
+    float *S= new float [batch*k];
+    float *XW1=new float[batch*l];
 
-//     // END YOUR CODE
-// }
+    #pragma acc data copyin(Grad_W1[0:n*l],SW2[0:batch*l],Grad_W2[0:l*k],Y[0:batch*k],S[0:batch*k],XW1[0:batch*l])
+    {
 
-// /**
-//  *Example function to fully train a nn classifier
-//  **/
-// void train_nn(const DataSet *train_data, const DataSet *test_data, size_t num_classes, size_t hidden_dim, size_t epochs, float lr, size_t batch)
-// {
-//     size_t size_w1 = train_data->input_dim * hidden_dim;
-//     size_t size_w2 = hidden_dim * num_classes;
-//     float *W1 = new float[size_w1];
-//     float *W2 = new float[size_w2];
-//     std::mt19937 rng;
-//     rng.seed(0);
-//     std::normal_distribution<float> dist(0.0, 1.0);
-//     for (size_t i = 0; i < size_w1; i++)
-//     {
-//         W1[i] = dist(rng);
-//     }
-//     for (size_t i = 0; i < size_w2; i++)
-//     {
-//         W2[i] = dist(rng);
-//     }
-//     matrix_div_scalar(W1, sqrtf(hidden_dim), train_data->input_dim, hidden_dim);
-//     matrix_div_scalar(W2, sqrtf(num_classes), hidden_dim, num_classes);
-//     float *train_result = new float[train_data->images_num * num_classes];
-//     float *test_result = new float[test_data->images_num * num_classes];
-//     float train_loss, train_err, test_loss, test_err;
-//     std::cout << "| Epoch | Train Loss | Train Err | Test Loss | Test Err |" << std::endl;
-//     auto start_time = std::chrono::high_resolution_clock::now();
-//     for (size_t epoch = 0; epoch < epochs; epoch++)
-//     {
-//         // BEGIN YOUR CODE
+    for (int i=0;i<m;i+=batch){
+        const float*Cur_X= X + n * i;
+        const unsigned char*Cur_y= y + i;
 
-//         // END YOUR CODE
-//         train_loss = mean_softmax_loss(train_result, train_data->labels_array, train_data->images_num, num_classes);
-//         test_loss = mean_softmax_loss(test_result, test_data->labels_array, test_data->images_num, num_classes);
-//         train_err = mean_err(train_result, train_data->labels_array, train_data->images_num, num_classes);
-//         test_err = mean_err(test_result, test_data->labels_array, test_data->images_num, num_classes);
-//         std::cout << "|  " << std::setw(4) << std::right << epoch << " |    "
-//                   << std::fixed << std::setprecision(5) << train_loss << " |   "
-//                   << std::fixed << std::setprecision(5) << train_err << " |   "
-//                   << std::fixed << std::setprecision(5) << test_loss << " |  "
-//                   << std::fixed << std::setprecision(5) << test_err << " |" << std::endl;
-//     }
-//     auto end_time = std::chrono::high_resolution_clock::now();
-//     auto elapsed_time =
-//         std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
-//                                                               start_time);
-//     std::cout << "Execution Time: " << elapsed_time.count()
-//               << " milliseconds\n";
-//     delete[] W1;
-//     delete[] W2;
-//     delete[] train_result;
-//     delete[] test_result;
-// }
+        //Calsulate S-Iy
+            //Y
+        vector_to_one_hot_matrix(Cur_y,Y,batch,k);
+            //XW1
+        memset(XW1,0,batch*l*sizeof(float));
+        matrix_dot(Cur_X,W1,XW1,batch,n,l);//每次使用matrix dot的时候都要把结果矩阵清零
+            //σ(XW1)
+        relu(XW1,batch*l);
+            //σ(XW1)*W2
+        memset(S,0,batch*k*sizeof(float));
+        matrix_dot(XW1,W2,S,batch,l,k);
+            //softmax(σ(XW1)*W2)=S
+        matrix_softmax_normalize(S, batch, k);
+        matrix_minus(S,Y,batch,k);
+        //done, S-Iy in S, σ(XW1) in XW1
+        
+
+        
+        //Calculate gradient for W2
+        memset(Grad_W2,0,l*k*sizeof(float));
+        matrix_dot_trans_mine(XW1,S,Grad_W2,batch,l,k);
+
+        //Calculate gradient for W1
+
+            //SW2=(S-Iy)*W2T
+            //这个函数比较特殊，自己就会覆盖，就不用memset了
+        matrix_trans_dot(S,W2,SW2,batch,k, l);
+
+        zero_or_one(XW1, batch*l);
+        matrix_mul(SW2,XW1,batch*l);
+
+        memset(Grad_W1,0,n*l*sizeof(float));
+        matrix_dot_trans_mine(Cur_X,SW2,Grad_W1,batch,n,l);
+
+        //Done Grad_W1 stores the XT *(S-Iy)*W2T ○ σ'(XW1)
+
+
+        //Update W1 and W2
+
+        matrix_div_scalar(Grad_W1,batch,n,l);
+        matrix_div_scalar(Grad_W2,batch,l,k);
+
+
+        matrix_mul_scalar(Grad_W1,lr,n,l);
+        matrix_mul_scalar(Grad_W2,lr,l,k);
+
+
+        matrix_minus(W1,Grad_W1,n,l);
+        matrix_minus(W2,Grad_W2,l,k);
+
+
+
+    }
+    }
+
+    delete[] Grad_W1;
+    delete[] Grad_W2;
+    delete[] SW2;
+    delete[] XW1;
+    delete[] Y;
+    delete[] S;
+
+    // END YOUR CODE
+    // END YOUR CODE
+}
+
+/**
+ *Example function to fully train a nn classifier
+ **/
+void train_nn_openacc(const DataSet *train_data, const DataSet *test_data, size_t num_classes, size_t hidden_dim, size_t epochs, float lr, size_t batch)
+{
+    size_t size_w1 = train_data->input_dim * hidden_dim;//hidden dim=400,input dim=长度乘以宽度，意思应该是每个input num都有四百个触角触达到下一层
+    size_t size_w2 = hidden_dim * num_classes;//hidden dim每一个都有
+    float *W1 = new float[size_w1];
+    float *W2 = new float[size_w2];
+    std::mt19937 rng;
+    rng.seed(0);
+    std::normal_distribution<float> dist(0.0, 1.0);
+    for (size_t i = 0; i < size_w1; i++)
+    {
+        W1[i] = dist(rng);
+    }
+    for (size_t i = 0; i < size_w2; i++)
+    {
+        W2[i] = dist(rng);
+    }
+    matrix_div_scalar(W1, sqrtf(hidden_dim), train_data->input_dim, hidden_dim);//每一个元素都要除以自身的sqrt（不懂
+    matrix_div_scalar(W2, sqrtf(num_classes), hidden_dim, num_classes);
+    float *train_result = new float[train_data->images_num * num_classes];
+    float *test_result = new float[test_data->images_num * num_classes];
+
+    float *Temp_Train=new float [hidden_dim*train_data->images_num];
+    float *Temp_Test=new float [hidden_dim*test_data->images_num];
+
+
+
+    float train_loss, train_err, test_loss, test_err;
+
+//
+    float *X_test=test_data->images_matrix;
+    float * X=train_data->images_matrix;
+    unsigned char*y_train=train_data->labels_array;
+    unsigned char*y_test=test_data->labels_array;
+    size_t images_num_train=train_data->images_num;
+    size_t images_num_test=test_data->images_num;
+    size_t input_dim=train_data->input_dim; 
+
+
+
+    std::cout << "| Epoch | Train Loss | Train Err | Test Loss | Test Err |" << std::endl;
+    // std::cout << "alskjdklasjd给matrixdot加了个temp" << std::endl;
+    std::chrono::milliseconds elapsed_time;
+
+    #pragma acc data copyin(X_test[0:images_num_test*input_dim],                                                         \
+                            W1[0:size_w1],W2[0:size_w2],Temp_Train[0:hidden_dim*images_num_train],\
+                            Temp_Test[0:hidden_dim*images_num_test],                \
+                            X[0:images_num_train * input_dim],train_result[0:images_num_train*num_classes],\
+                            test_result[0:images_num_test*num_classes],y_train[0:images_num_train],y_test[0:images_num_test])
+
+  
+    {
+    auto start_time = std::chrono::high_resolution_clock::now();
+        
+        for (size_t epoch = 0; epoch < epochs; epoch++)
+    {
+        // BEGIN YOUR CODE
+
+
+        //image_matrix就是images_num*input_dim,一个大的所有数据的集合
+        nn_epoch_cpp(X,y_train,W1,W2,images_num_train,input_dim,hidden_dim,num_classes,lr,batch);
+        
+        memset(train_result, 0, images_num_train * num_classes * sizeof(float));
+        memset(test_result, 0, images_num_test * num_classes * sizeof(float));
+        memset(Temp_Train, 0, hidden_dim*images_num_train * sizeof(float));
+        memset(Temp_Test, 0, hidden_dim*images_num_test * sizeof(float));
+
+        matrix_dot(X, W1, Temp_Train, images_num_train, input_dim, hidden_dim);
+        relu(Temp_Train, images_num_train * hidden_dim);
+        matrix_dot(Temp_Train, W2, train_result, images_num_train, hidden_dim, num_classes);
+
+        matrix_dot(X_test, W1, Temp_Test, images_num_test, input_dim, hidden_dim);
+        relu(Temp_Test, images_num_test * hidden_dim);
+        matrix_dot(Temp_Test, W2, test_result, images_num_test, hidden_dim, num_classes);
+
+
+        // END YOUR CODE
+        train_loss = mean_softmax_loss(train_result, y_train, images_num_train, num_classes);
+        test_loss = mean_softmax_loss(test_result, y_test, images_num_test, num_classes);
+        train_err = mean_err(train_result, y_train, images_num_train, num_classes);
+        test_err = mean_err(test_result, y_test, images_num_test, num_classes);
+        std::cout << "|  " << std::setw(4) << std::right << epoch << " |    "
+                  << std::fixed << std::setprecision(5) << train_loss << " |   "
+                  << std::fixed << std::setprecision(5) << train_err << " |   "
+                  << std::fixed << std::setprecision(5) << test_loss << " |  "
+                  << std::fixed << std::setprecision(5) << test_err << " |" << std::endl;
+    }
+    auto end_time = std::chrono::high_resolution_clock::now();
+     elapsed_time =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
+                                                              start_time);
+                                                              }
+    std::cout << "Execution Time: " << elapsed_time.count()
+              << " milliseconds\n";
+    delete[] W1;
+    delete[] W2;
+    delete[] train_result;
+    delete[] test_result;
+    delete[] Temp_Test;
+    delete[] Temp_Train;
+}

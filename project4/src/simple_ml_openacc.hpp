@@ -106,12 +106,13 @@ void nn_epoch_cpp(const float *X,
                   float lr,
                   size_t batch);
 
-void train_nn(const DataSet *train_data,
+void train_nn_openacc(const DataSet *train_data,
               const DataSet *test_data,
               size_t num_classes,
               size_t hidden_dim = 500,
               size_t epochs = 10,
               float lr = 0.5,
               size_t batch = 100);
-
+void relu(float *A, size_t size);
+void zero_or_one(float *input, size_t size);
 #endif
