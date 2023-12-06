@@ -202,19 +202,31 @@ void matrix_dot_trans(const float *A, const float *B, float *C, size_t n, size_t
  *     B (const float*): Matrix of size k * n
  *     C (float*): Matrix of size m * k
  **/
-void matrix_trans_dot(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
-{
+// void matrix_trans_dot(const float *A, const float *B, float *C, size_t m, size_t n, size_t k)
+// {
     // BEGIN YOUR CODE
+void matrix_trans_dot(const float *A, const float *B, float *C, 
+                      size_t m, size_t n, size_t k) 
+{
+  #pragma acc data present(A[0:m*n], B[0:k*n],C[0:m*k])
+  {
+    #pragma acc parallel loop 
     for (size_t i = 0; i < m; ++i) {
-        for (size_t j = 0; j < k; ++j) {
-            C[i * k + j] = 0.0;
-            for (size_t l = 0; l < n; ++l) {
-                C[i * k + j] += A[i * n + l] * B[j * n + l];
-            }
-        }
+        #pragma acc loop
+      for (size_t j = 0; j < k; ++j) {
+        float sum=0;
+        #pragma acc loop independent reduction (+:sum)
+        // C[i*k + j] = 0.0;
+        for (size_t l = 0; l < n; ++l) {
+          sum += A[i*n + l] * B[j*n + l];
+        } 
+         C[i*k + j]=sum;
+      }
     }
-    // END YOUR CODE
+  }
 }
+    // END YOUR CODE
+// }
 
 /**
  * Matrix Minus
@@ -290,9 +302,17 @@ void matrix_mul_scalar(float *C, float scalar, size_t m, size_t n)
 void matrix_div_scalar(float *C, float scalar, size_t m, size_t n)
 {
     // BEGIN YOUR CODE
-    for (size_t i = 0; i < m; ++i) {
-        for (size_t j = 0; j < n; ++j) {
-            C[i * n + j] *= scalar;
+    #pragma acc data present(C[0:m*n])
+    {
+        {
+            #pragma acc parallel loop
+            for (size_t i = 0; i < m; ++i) {
+                #pragma acc loop
+
+                for (size_t j = 0; j < n; ++j) {
+                    C[i*n + j] /= scalar;
+                }
+            }
         }
     }
     // END YOUR CODE
@@ -800,20 +820,23 @@ void matrix_mul(float *A, const float *B, size_t size)
     //     A[i] *= B[i];
     // }
     // // END YOUR CODE
-      
-    #pragma acc parallel loop present(A[0:size],B[0:size])
+    #pragma acc data present(A[0:size],B[0:size])
+{    
+    #pragma acc parallel loop 
     for (size_t i = 0; i < size; i++) {
         A[i] *= B[i]; 
-    }
+    }}
 }
 
 void relu(float *A, size_t size)
 {
     // BEGIN YOUR CODE
-    #pragma acc parallel loop present(A[0:size])
+    #pragma acc data present(A[0:size])
+    {
+        #pragma acc parallel loop 
     for (size_t i = 0; i < size; i++) {
         A[i] = std::max(0.0f,A[i]);
-    }
+    }}
     // END YOUR CODE
 }
 void zero_or_one(float *input, size_t size)
@@ -970,8 +993,11 @@ void train_nn_openacc(const DataSet *train_data, const DataSet *test_data, size_
     {
         W2[i] = dist(rng);
     }
-    matrix_div_scalar(W1, sqrtf(hidden_dim), train_data->input_dim, hidden_dim);//每一个元素都要除以自身的sqrt（不懂
-    matrix_div_scalar(W2, sqrtf(num_classes), hidden_dim, num_classes);
+    #pragma acc data copyin(W1[0:size_w1],W2[0:size_w2])
+    {
+        matrix_div_scalar(W1, sqrtf(hidden_dim), train_data->input_dim, hidden_dim);//每一个元素都要除以自身的sqrt（不懂
+        matrix_div_scalar(W2, sqrtf(num_classes), hidden_dim, num_classes);
+
     float *train_result = new float[train_data->images_num * num_classes];
     float *test_result = new float[test_data->images_num * num_classes];
 
@@ -996,9 +1022,9 @@ void train_nn_openacc(const DataSet *train_data, const DataSet *test_data, size_
     std::cout << "| Epoch | Train Loss | Train Err | Test Loss | Test Err |" << std::endl;
     // std::cout << "alskjdklasjd给matrixdot加了个temp" << std::endl;
     std::chrono::milliseconds elapsed_time;
-
+    #pragma acc data present(W1[0:size_w1],W2[0:size_w2])
     #pragma acc data copyin(X_test[0:images_num_test*input_dim],                                                         \
-                            W1[0:size_w1],W2[0:size_w2],Temp_Train[0:hidden_dim*images_num_train],\
+                            Temp_Train[0:hidden_dim*images_num_train],\
                             Temp_Test[0:hidden_dim*images_num_test],                \
                             X[0:images_num_train * input_dim],train_result[0:images_num_train*num_classes],\
                             test_result[0:images_num_test*num_classes],y_train[0:images_num_train],y_test[0:images_num_test])
@@ -1044,7 +1070,7 @@ void train_nn_openacc(const DataSet *train_data, const DataSet *test_data, size_
      elapsed_time =
         std::chrono::duration_cast<std::chrono::milliseconds>(end_time -
                                                               start_time);
-                                                              }
+    }
     std::cout << "Execution Time: " << elapsed_time.count()
               << " milliseconds\n";
     delete[] W1;
@@ -1053,4 +1079,6 @@ void train_nn_openacc(const DataSet *train_data, const DataSet *test_data, size_
     delete[] test_result;
     delete[] Temp_Test;
     delete[] Temp_Train;
+                                                              }
+
 }
