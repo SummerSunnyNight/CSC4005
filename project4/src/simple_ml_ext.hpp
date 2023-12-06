@@ -1,6 +1,7 @@
 #ifndef SIMPLE_ML_EXT
 #define SIMPLE_ML_EXT
 
+
 #include <memory.h>
 
 #include <chrono>
@@ -11,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <random>
+using namespace std;
 
 /**
  * Contain the MNIST Data.
@@ -48,6 +50,8 @@ void print_matrix(float *A, size_t m, size_t n);
 
 void matrix_dot(const float *A, const float *B, float *C, size_t m, size_t n, size_t k);
 
+void matrix_dot_trans_mine(const float *A, const float *B, float *C, size_t m, size_t n, size_t k);
+
 void matrix_dot_trans(const float *A, const float *B, float *C, size_t n, size_t m, size_t k);
 
 void matrix_trans_dot(const float *A, const float *B, float *C, size_t m, size_t n, size_t k);
@@ -60,7 +64,7 @@ void matrix_div_scalar(float *C, float scalar, size_t m, size_t n);
 
 void matrix_softmax_normalize(float *C, size_t m, size_t n);
 
-void vector_to_one_hot_matrix(const unsigned char *y, float *Y, size_t m, size_t n);
+void vector_to_one_hot_matrix(const unsigned char *y, float *Y, size_t m, size_t k);
 
 void softmax_regression_epoch_cpp(const float *X,
                                   const unsigned char *y,
@@ -108,5 +112,7 @@ void train_nn(const DataSet *train_data,
               size_t epochs = 10,
               float lr = 0.5,
               size_t batch = 100);
+void relu(float *A, size_t size);
+void zero_or_one(float *input, size_t size);
 
 #endif
