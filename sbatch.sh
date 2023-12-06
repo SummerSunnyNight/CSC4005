@@ -29,6 +29,7 @@ echo "Softmax OpenACC"
 
 
 srun -n 1 --gpus 1 ${CURRENT_DIR}/build/softmax_openacc $TRAIN_X $TRAIN_Y $TEST_X $TEST_Y
+# srun -n 1 --gpus 1 nsys profile -t cuda,nvtx,osrt,openacc -o ./openacc_softmax.qdrep ${CURRENT_DIR}/build/softmax_openacc $TRAIN_X $TRAIN_Y $TEST_X $TEST_Y
 echo ""
 
 # # NN

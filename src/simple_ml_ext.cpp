@@ -557,7 +557,21 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
     float *train_result = new float[train_data->images_num * num_classes];//应该是最后的预测结果，m=images_num
     float *test_result = new float[test_data->images_num * num_classes];
     float train_loss, train_err, test_loss, test_err;
+    
+    float *X_test=test_data->images_matrix;
+    float * X=train_data->images_matrix;
+    unsigned char*y_train=train_data->labels_array;
+    unsigned char*y_test=test_data->labels_array;
+    size_t images_num_train=train_data->images_num;
+    size_t images_num_test=test_data->images_num;
+    size_t input_dim=train_data->input_dim; 
+    float *Final = new float[input_dim*num_classes];
+    float *Y = new float[batch*num_classes];
+    float *Z = new float[batch*num_classes];
+
+    
     std::cout << "| Epoch | Train Loss | Train Err | Test Loss | Test Err |" << std::endl;
+    std::cout << "我是帅哥" << std::endl;
     auto start_time = std::chrono::high_resolution_clock::now();
     // cout<<"What is in X:"<<endl;
     // for(int i=0;i<50000;i++){
@@ -569,16 +583,10 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
     // }images_num * input_dim
 
 
-    float * X=train_data->images_matrix;
-    unsigned char*y=train_data->labels_array;
-    size_t images_num=train_data->images_num;
-    size_t input_dim=train_data->input_dim; 
-    float *Final = new float[input_dim*num_classes];
-    float *Y = new float[batch*num_classes];
-    float *Z = new float[batch*num_classes];
 
 
-        #pragma acc data copyin(Y[0:batch*num_classes],Z[0:batch*num_classes],Final[0:input_dim*num_classes],X[0:images_num * input_dim],y[0:images_num],theta[0:size],train_result[0:images_num*num_classes],test_result[0:images_num*num_classes])
+
+        #pragma acc data copyin(X_test[0:images_num_test*input_dim],Y[0:batch*num_classes],Z[0:batch*num_classes],Final[0:input_dim*num_classes],X[0:images_num_train * input_dim],theta[0:size],train_result[0:images_num_train*num_classes],test_result[0:images_num_test*num_classes],y_train[0:images_num_train],y_test[0:images_num_test])
         {
 
 
@@ -592,16 +600,16 @@ void train_softmax(const DataSet *train_data, const DataSet *test_data, size_t n
 
         // #pragma acc data copy()
         {
-            softmax_regression_epoch_cpp(X,y,theta,Final,Y,Z,images_num,input_dim,num_classes,lr,batch);
+            softmax_regression_epoch_cpp(X,y_train,theta,Final,Y,Z,images_num_train,input_dim,num_classes,lr,batch);
 
 
-            matrix_dot(X,theta,train_result,images_num,input_dim,num_classes);
-            matrix_dot(X,theta,test_result,images_num,input_dim,num_classes);
+            matrix_dot(X,theta,train_result,images_num_train,input_dim,num_classes);
+            matrix_dot(X_test,theta,test_result,images_num_test,input_dim,num_classes);
             // END YOUR CODE
-            train_loss = mean_softmax_loss(train_result, y, images_num, num_classes);
-            test_loss = mean_softmax_loss(test_result, y, images_num, num_classes);
-            train_err = mean_err(train_result, y, images_num, num_classes);
-            test_err = mean_err(test_result, y, images_num, num_classes);
+            train_loss = mean_softmax_loss(train_result, y_train, images_num_train, num_classes);
+            test_loss = mean_softmax_loss(test_result, y_test, images_num_test, num_classes);
+            train_err = mean_err(train_result, y_train, images_num_train, num_classes);
+            test_err = mean_err(test_result, y_test, images_num_test, num_classes);
         }
         
         std::cout << "|  " << std::setw(4) << std::right << epoch << " |    "
